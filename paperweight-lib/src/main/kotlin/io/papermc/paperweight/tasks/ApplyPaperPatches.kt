@@ -25,6 +25,7 @@ package io.papermc.paperweight.tasks
 import com.github.salomonbrys.kotson.fromJson
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
+import java.nio.file.Files
 import java.nio.file.Path
 import javax.inject.Inject
 import kotlin.io.path.*
@@ -38,6 +39,7 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 abstract class ApplyPaperPatches : ControllableOutputTask() {
@@ -89,9 +91,17 @@ abstract class ApplyPaperPatches : ControllableOutputTask() {
     @get:OutputDirectory
     abstract val mcDevSources: DirectoryProperty
 
+    @get:OutputFile
+    abstract val remapSourcesPatch: RegularFileProperty
+
+    @get:OutputFile
+    abstract val mcDevSourcesPatch: RegularFileProperty
+
     override fun init() {
         upstreamBranch.convention("master")
         ignoreGitIgnore.convention(Git.ignoreProperty(providers)).finalizeValueOnRead()
+        remapSourcesPatch.convention(objects.fileProperty().convention(layout.cacheFile("$INITIAL_PAPER_PATCHES/remap.patch")))
+        mcDevSourcesPatch.convention(objects.fileProperty().convention(layout.cacheFile("$INITIAL_PAPER_PATCHES/mcdev.patch")))
     }
 
     @TaskAction
@@ -132,16 +142,6 @@ abstract class ApplyPaperPatches : ControllableOutputTask() {
                 into(testDir)
             }
 
-            val patches = patchDir.path.listDirectoryEntries("*.patch")
-            McDev.importMcDev(
-                patches = patches,
-                decompJar = sourceMcDevJar.path,
-                importsFile = devImports.pathOrNull,
-                targetDir = sourceDir,
-                librariesDirs = listOf(spigotLibrariesDir.path, mcLibrariesDir.path),
-                printOutput = printOutput.get()
-            )
-
             val caseOnlyChanges = caseOnlyClassNameChanges.path.bufferedReader(Charsets.UTF_8).use { reader ->
                 gson.fromJson<List<ClassNameChange>>(reader)
             }
@@ -156,6 +156,26 @@ abstract class ApplyPaperPatches : ControllableOutputTask() {
 
             git(*Git.add(ignoreGitIgnore, ".")).executeSilently()
             git("commit", "-m", "Initial", "--author=Initial Source <auto@mated.null>").executeSilently()
+            val remapSources = git("format-patch", "--no-stat", "-N", "--zero-commit", "--full-index", "--no-signature", "HEAD~1")
+            remapSourcesPatch.path.deleteForcefully()
+            Files.move(outputFile.resolve(remapSources.getText().trim()), remapSourcesPatch.path)
+            git("reset", "--soft", "HEAD~1").executeSilently()
+
+            val patches = patchDir.path.listDirectoryEntries("*.patch")
+            McDev.importMcDev(
+                patches = patches,
+                decompJar = sourceMcDevJar.path,
+                importsFile = devImports.pathOrNull,
+                targetDir = sourceDir,
+                librariesDirs = listOf(spigotLibrariesDir.path, mcLibrariesDir.path),
+                printOutput = printOutput.get()
+            )
+
+            git(*Git.add(ignoreGitIgnore, ".")).executeSilently()
+            git("commit", "-m", "Initial", "--author=Initial Source <auto@mated.null>").executeSilently()
+            mcDevSourcesPatch.path.deleteForcefully()
+            val mcDev = git("format-patch", "--no-stat", "-N", "--zero-commit", "--full-index", "--no-signature", "HEAD~1", "--", ".", ":^nms-patches")
+            Files.move(outputFile.resolve(mcDev.getText().trim()), mcDevSourcesPatch.path)
             git("tag", "-d", "base").runSilently(silenceErr = true)
             git("tag", "base").executeSilently()
 
