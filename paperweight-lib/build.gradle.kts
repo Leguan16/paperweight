@@ -2,6 +2,10 @@ plugins {
     `config-kotlin`
 }
 
+repositories {
+    gradlePluginPortal()
+}
+
 dependencies {
     implementation(libs.httpclient)
     implementation(libs.kotson)
@@ -20,4 +24,6 @@ dependencies {
     implementation("net.minecraftforge:DiffPatch:2.0.7:all") {
         isTransitive = false
     }
+
+    compileOnly(libs.gradle.shadow)
 }
