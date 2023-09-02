@@ -144,10 +144,12 @@ abstract class GenerateRelocatedReobfMappings : JavaLauncherTask() {
                 return
             }
             if (currentClass.name().startsWith(PREFIX) && !currentClass.name().startsWith(MAIN)) {
+                // For now, keep relocating CraftBukkit at runtime to avoid breaking plugins parsing the package name
+                // Instead, map plugins compiling against non-relocated CraftBukkit to the relocated package
                 registry.submitChange(
                     GenerateReobfMappings.AddClassMappingChange(
-                        currentClass.name(),
-                        "$relocateTo/${currentClass.name().substring(PREFIX.length)}"
+                        "$relocateTo/${currentClass.name().substring(PREFIX.length)}",
+                        currentClass.name()
                     )
                 )
             }
