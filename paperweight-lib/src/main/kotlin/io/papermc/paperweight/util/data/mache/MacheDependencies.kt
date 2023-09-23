@@ -1,8 +1,5 @@
 package io.papermc.paperweight.util.data.mache
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class MacheDependencies(
     val codebook: List<MavenArtifact>,
     val paramMappings: List<MavenArtifact>,

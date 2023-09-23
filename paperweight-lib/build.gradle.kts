@@ -1,6 +1,5 @@
 plugins {
     `config-kotlin`
-    kotlin("plugin.serialization") version "1.8.21"
 }
 
 dependencies {
@@ -18,8 +17,7 @@ dependencies {
 
     implementation(libs.jbsdiff)
 
-    implementation(libs.serialize.core)
-    implementation(libs.serialize.json)
+    implementation(libs.codebook)
 
     implementation(variantOf(libs.diffpatch) { classifier("all") }) {
         isTransitive = false

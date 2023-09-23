@@ -1,8 +1,5 @@
 package io.papermc.paperweight.util.data.mache
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class MavenArtifact(
     val group: String,
     val name: String,

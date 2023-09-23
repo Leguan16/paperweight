@@ -70,6 +70,8 @@ import org.gradle.jvm.toolchain.JavaLauncher
 import org.gradle.jvm.toolchain.JavaToolchainService
 import org.gradle.kotlin.dsl.*
 
+val whitespace = Regex("\\s+")
+
 val gson: Gson = GsonBuilder().disableHtmlEscaping().setPrettyPrinting().registerTypeHierarchyAdapter(Path::class.java, PathJsonConverter()).create()
 
 class PathJsonConverter : JsonDeserializer<Path?>, JsonSerializer<Path?> {
@@ -183,6 +185,12 @@ fun Any.convertToPath(): Path {
         is Provider<*> -> this.get().convertToPath()
         else -> throw PaperweightException("Unknown type representing a file: ${this.javaClass.name}")
     }
+}
+
+internal fun Path.ensureClean(): Path {
+    deleteRecursively()
+    parent.createDirectories()
+    return this
 }
 
 fun Any.convertToFileProvider(layout: ProjectLayout, providers: ProviderFactory): Provider<RegularFile> {

@@ -77,7 +77,6 @@ class PaperweightCore : Plugin<Project> {
             }
         }
 
-        SoftSpoonTasks(target)
         val tasks = AllTasks(target)
 
         val devBundleTasks = DevBundleTasks(target)
@@ -87,6 +86,8 @@ class PaperweightCore : Plugin<Project> {
             ext.bundlerJarName,
             ext.mainClass
         )
+
+        val softSpoonTasks = SoftSpoonTasks(target, allTasks = tasks)
 
         target.createPatchRemapTask(tasks)
 
@@ -144,6 +145,11 @@ class PaperweightCore : Plugin<Project> {
                        content { onlyForConfigurations(MACHE_CONFIG) }
                    }
                }
+            }
+
+            if (ext.softSpoon.get()) {
+                softSpoonTasks.afterEvaluate()
+                return@afterEvaluate
             }
 
             // Setup the server jar

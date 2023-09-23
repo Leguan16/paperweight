@@ -8,12 +8,12 @@ plugins {
 }
 
 java {
-    withSourcesJar()
+    //withSourcesJar()
 }
 
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -27,6 +27,28 @@ repositories {
         mavenContent {
             includeGroup("codechicken")
             includeGroup("net.fabricmc")
+            includeGroupAndSubgroups("io.papermc")
+        }
+    }
+    maven("https://maven.parchmentmc.org") {
+        name = "ParchmentMC"
+        mavenContent {
+            releasesOnly()
+            includeGroupAndSubgroups("org.parchmentmc")
+        }
+    }
+    maven("https://maven.neoforged.net/releases") {
+        name = "NeoForged"
+        mavenContent {
+            releasesOnly()
+            includeGroupAndSubgroups("net.neoforged")
+        }
+    }
+    maven("https://maven.fabricmc.net") {
+        name = "FabricMC"
+        mavenContent {
+            releasesOnly()
+            includeGroupAndSubgroups("net.fabricmc")
         }
     }
     mavenCentral()
@@ -58,7 +80,7 @@ testing {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
         freeCompilerArgs = listOf("-Xjvm-default=all")
     }
 }
