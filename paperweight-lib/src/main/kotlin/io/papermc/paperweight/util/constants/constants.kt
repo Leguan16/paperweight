@@ -73,6 +73,8 @@ const val PAPERWEIGHT_DOWNSTREAM_FILE_PROPERTY = "paperweightDownstreamDataFile"
 
 private const val JARS_PATH = "$PAPER_PATH/jars"
 const val MINECRAFT_JARS_PATH = "$JARS_PATH/minecraft"
+const val BUNDLE_JAR_PATH = "$MINECRAFT_JARS_PATH/bundle.jar"
+const val SERVER_JAR_PATH = "$MINECRAFT_JARS_PATH/server.jar"
 const val MINECRAFT_SOURCES_PATH = "$JARS_PATH/minecraft-sources"
 
 const val SPIGOT_JARS_PATH = "$JARS_PATH/spigot"
@@ -111,6 +113,7 @@ private const val TASK_CACHE = "$PAPER_PATH/taskCache"
 const val FINAL_REMAPPED_JAR = "$TASK_CACHE/minecraft.jar"
 const val FINAL_FILTERED_REMAPPED_JAR = "$TASK_CACHE/filteredMinecraft.jar"
 const val FINAL_DECOMPILE_JAR = "$TASK_CACHE/decompileJar.jar"
+const val DECOMP_CFG = "$TASK_CACHE/decomp_cfg.txt"
 
 const val MC_DEV_SOURCES_DIR = "$PAPER_PATH/mc-dev-sources"
 
@@ -119,6 +122,11 @@ const val IVY_REPOSITORY = "$PAPER_PATH/ivyRepository"
 const val RELOCATION_EXTENSION = "relocation"
 
 const val DOWNLOAD_SERVICE_NAME = "paperweightDownloadService"
+
+private const val MACHE_PATH = "$PAPER_PATH/mache"
+const val PATCHED_JAR = "$MACHE_PATH/patched.jar"
+const val FAILED_PATCH_JAR = "$MACHE_PATH/failed.jar"
+const val PATCHES_FOLDER = "$MACHE_PATH/patches"
 
 fun paperSetupOutput(name: String, ext: String) = "$SETUP_CACHE/$name.$ext"
 fun Task.paperTaskOutput(ext: String) = paperTaskOutput(name, ext)

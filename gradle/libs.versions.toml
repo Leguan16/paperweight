@@ -10,6 +10,9 @@ asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
 
 httpclient = "org.apache.httpcomponents:httpclient:4.5.14"
 kotson = "com.github.salomonbrys.kotson:kotson:2.5.0"
+coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.2"
+jgit = "org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r"
+diffutils = "io.github.java-diff-utils:java-diff-utils:4.12"
 gson = "com.google.code.gson:gson:2.10.1"
 
 cadix-lorenz-core = { module = "org.cadixdev:lorenz", version.ref = "lorenz" }

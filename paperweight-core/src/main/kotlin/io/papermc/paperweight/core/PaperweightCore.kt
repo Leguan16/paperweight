@@ -87,7 +87,7 @@ class PaperweightCore : Plugin<Project> {
             ext.mainClass
         )
 
-        val softSpoonTasks = SoftSpoonTasks(target, allTasks = tasks)
+        val softSpoonTasks = SoftSpoonTasks(target)
 
         target.createPatchRemapTask(tasks)
 

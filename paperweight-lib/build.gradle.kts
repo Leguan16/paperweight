@@ -5,6 +5,9 @@ plugins {
 dependencies {
     implementation(libs.httpclient)
     implementation(libs.bundles.kotson)
+    implementation(libs.coroutines)
+    implementation(libs.jgit)
+    implementation(libs.diffutils)
 
     // ASM for inspection
     implementation(libs.bundles.asm)

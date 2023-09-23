@@ -45,6 +45,8 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 abstract class DownloadService : BuildService<BuildServiceParameters.None>, AutoCloseable {
 
@@ -62,6 +64,12 @@ abstract class DownloadService : BuildService<BuildServiceParameters.None>, Auto
         val url = source.convertToUrl()
         val file = target.convertToPath()
         download(url, file, hash)
+    }
+
+    suspend fun downloadAsync(source: Any, target: Any, hash: Hash? = null) = coroutineScope {
+        async {
+            download(source.convertToUrl(), target.convertToPath(), hash, false)
+        }
     }
 
     private fun download(source: URL, target: Path, hash: Hash?, retry: Boolean = false) {
