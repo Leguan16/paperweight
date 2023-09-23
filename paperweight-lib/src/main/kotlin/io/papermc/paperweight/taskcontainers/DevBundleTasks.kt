@@ -99,7 +99,7 @@ class DevBundleTasks(
             mojangMappedPaperclipFile.set(paperclipForDevBundle.flatMap { it.outputZip })
             vanillaServerLibraries.set(
                 serverLibrariesTxt.map { txt ->
-                    txt.readLines(Charsets.UTF_8).filter { it.isNotBlank() }
+                    txt!!.readLines(Charsets.UTF_8).filter { it.isNotBlank() }
                 }
             )
 

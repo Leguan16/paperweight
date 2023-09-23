@@ -25,6 +25,7 @@ package io.papermc.paperweight.core
 import io.papermc.paperweight.DownloadService
 import io.papermc.paperweight.core.extension.PaperweightCoreExtension
 import io.papermc.paperweight.core.taskcontainers.AllTasks
+import io.papermc.paperweight.core.taskcontainers.SoftSpoonTasks
 import io.papermc.paperweight.core.tasks.PaperweightCorePrepareForDownstream
 import io.papermc.paperweight.taskcontainers.BundlerJarTasks
 import io.papermc.paperweight.taskcontainers.DevBundleTasks
@@ -64,6 +65,7 @@ class PaperweightCore : Plugin<Project> {
         target.configurations.create(REMAPPER_CONFIG)
         target.configurations.create(DECOMPILER_CONFIG)
         target.configurations.create(PAPERCLIP_CONFIG)
+        target.configurations.create(MACHE_CONFIG)
 
         if (target.providers.gradleProperty("paperweight.dev").orNull == "true") {
             target.tasks.register<CreateDiffOutput>("diff") {
@@ -75,6 +77,7 @@ class PaperweightCore : Plugin<Project> {
             }
         }
 
+        SoftSpoonTasks(target)
         val tasks = AllTasks(target)
 
         val devBundleTasks = DevBundleTasks(target)
@@ -119,19 +122,28 @@ class PaperweightCore : Plugin<Project> {
         }
 
         target.afterEvaluate {
+            println("SoftSpoon: ${ext.softSpoon.get()}")
+
             target.repositories {
-                maven(ext.paramMappingsRepo) {
-                    name = PARAM_MAPPINGS_REPO_NAME
-                    content { onlyForConfigurations(PARAM_MAPPINGS_CONFIG) }
-                }
-                maven(ext.remapRepo) {
-                    name = REMAPPER_REPO_NAME
-                    content { onlyForConfigurations(REMAPPER_CONFIG) }
-                }
-                maven(ext.decompileRepo) {
-                    name = DECOMPILER_REPO_NAME
-                    content { onlyForConfigurations(DECOMPILER_CONFIG) }
-                }
+               if (!ext.softSpoon.get()) {
+                   maven(ext.paramMappingsRepo) {
+                       name = PARAM_MAPPINGS_REPO_NAME
+                       content { onlyForConfigurations(PARAM_MAPPINGS_CONFIG) }
+                   }
+                   maven(ext.remapRepo) {
+                       name = REMAPPER_REPO_NAME
+                       content { onlyForConfigurations(REMAPPER_CONFIG) }
+                   }
+                   maven(ext.decompileRepo) {
+                       name = DECOMPILER_REPO_NAME
+                       content { onlyForConfigurations(DECOMPILER_CONFIG) }
+                   }
+               } else {
+                   maven(ext.macheRepo) {
+                       name = MACHE_REPO_NAME
+                       content { onlyForConfigurations(MACHE_CONFIG) }
+                   }
+               }
             }
 
             // Setup the server jar

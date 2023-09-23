@@ -2,6 +2,7 @@
 asm = "9.6"
 lorenz = "0.5.8"
 hypo = "1.2.4"
+serialize = "1.5.1"
 
 [libraries]
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
@@ -30,6 +31,9 @@ lorenzTiny = "net.fabricmc:lorenz-tiny:3.0.0"
 jbsdiff = "io.sigpipe:jbsdiff:1.0"
 
 diffpatch = "codechicken:DiffPatch:1.5.0.29"
+
+serialize-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialize" }
+serialize-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialize" }
 
 # Gradle
 gradle-licenser = "net.kyori:indra-licenser-spotless:3.1.3"

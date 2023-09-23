@@ -1,5 +1,6 @@
 plugins {
     `config-kotlin`
+    kotlin("plugin.serialization") version "1.8.21"
 }
 
 dependencies {
@@ -16,6 +17,9 @@ dependencies {
     implementation(libs.lorenzTiny)
 
     implementation(libs.jbsdiff)
+
+    implementation(libs.serialize.core)
+    implementation(libs.serialize.json)
 
     implementation(variantOf(libs.diffpatch) { classifier("all") }) {
         isTransitive = false
