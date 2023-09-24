@@ -1,5 +1,6 @@
 package io.papermc.paperweight.core.taskcontainers
 
+import io.papermc.paperweight.core.ext
 import io.papermc.paperweight.tasks.mache.*
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
@@ -12,6 +13,9 @@ import org.gradle.kotlin.dsl.*
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.Task
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.Sync
 
 open class SoftSpoonTasks(
@@ -60,7 +64,7 @@ open class SoftSpoonTasks(
         patchedJar.set(layout.cache.resolve(PATCHED_JAR))
         failedPatchJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
 
-        sourceDir.set(layout.projectDirectory.dir("Paper-Server/src/vanilla/java"))
+        sourceDir.set(this.project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
     }
 
     val macheApplyPatches by tasks.registering(ApplyPatches::class) {
@@ -85,7 +89,7 @@ open class SoftSpoonTasks(
 
     val macheCopyResources by tasks.registering(Sync::class) {
         group = "softspoon"
-        into(project.layout.projectDirectory.dir("Paper-Server/src/vanilla/resources"))
+        into(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
         from(project.zipTree(project.layout.cache.resolve(SERVER_JAR_PATH))) {
             exclude("**/*.class", "META-INF/**")
         }
@@ -193,6 +197,41 @@ open class SoftSpoonTasks(
             }
             mache.dependencies.decompiler.forEach {
                 "macheDecompiler"("${it.group}:${it.name}:${it.version}")
+            }
+        }
+
+        this.project.ext.serverProject.get().setupServerProject(mache, libs);
+    }
+
+    private fun Project.setupServerProject(mache: MacheMeta, libs: List<String>) {
+        if (!projectDir.exists()) {
+            return
+        }
+
+        // minecraft deps
+        val macheMinecraft by configurations.creating {
+            withDependencies {
+                dependencies {
+                    // setup mc deps
+                    libs.forEach {
+                        "macheMinecraft"(it)
+                    }
+                }
+            }
+        }
+
+        // impl extends minecraft
+        configurations.named(JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME) {
+            extendsFrom(macheMinecraft)
+        }
+
+        // add vanilla source set
+        the<JavaPluginExtension>().sourceSets.named(SourceSet.MAIN_SOURCE_SET_NAME) {
+            java {
+                srcDirs(projectDir.resolve("src/vanilla/java"))
+            }
+            resources {
+                srcDirs(projectDir.resolve("src/vanilla/resources"))
             }
         }
     }
