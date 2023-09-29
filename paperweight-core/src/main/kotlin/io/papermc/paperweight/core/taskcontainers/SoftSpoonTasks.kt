@@ -73,51 +73,42 @@ open class SoftSpoonTasks(
         inputFile.set(macheDecompileJar.flatMap { it.outputJar })
         outputJar.set(layout.cache.resolve(PATCHED_JAR))
         failedPatchesJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
-
-        finalizedBy(macheSetupSources)
     }
 
     val macheSetupSources by tasks.registering(SetupSources::class) {
         group = "mache"
         decompJar.set(macheDecompileJar.flatMap { it.outputJar })
-        // Don't use the output of applyPatches directly with a flatMap
-        // That would tell Gradle that this task dependsOn applyPatches, so it
-        // would no longer work as a finalizer task if applyPatches fails
-        patchedJar.set(layout.cache.resolve(PATCHED_JAR))
-        failedPatchJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
+        patchedJar.set(macheApplyPatches.flatMap { it.outputJar })
+        failedPatchJar.set(macheApplyPatches.flatMap { it.failedPatchesJar })
 
-        sourceDir.set(this.project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+        sourceDir.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
     }
 
-    // TODO we also need to create a git repo in resources here so we can have resource patches
     val macheCopyResources by tasks.registering(Sync::class) {
         group = "mache"
-        into(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
+        into(project.layout.cache.resolve(BASE_PROJECT).resolve("resources"))
         from(project.zipTree(project.layout.cache.resolve(SERVER_JAR_PATH))) {
             exclude("**/*.class", "META-INF/**")
         }
         includeEmptyDirs = false
     }
 
-    val setup by tasks.registering(Task::class) {
-        group = "softspoon"
-        description = "Set up the full project included patched sources and resources."
-        dependsOn(macheApplyPatches, macheCopyResources)
-    }
-
     val applySourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla sources"
 
-        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+        input.set(macheSetupSources.flatMap { it.sourceDir })
+        output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
 
     val applyResourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla resources"
+        dependsOn(macheCopyResources)
 
-        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
+        input.set(layout.cache.resolve(BASE_PROJECT).resolve("resources"))
+        output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
         patches.set(project.layout.projectDirectory.dir("patches/resources"))
     }
 
@@ -131,6 +122,7 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Rebuilds patches to the vanilla sources"
 
+        base.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
         input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
@@ -139,6 +131,7 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Rebuilds patches to the vanilla resources"
 
+        base.set(layout.cache.resolve(BASE_PROJECT).resolve("resources"))
         input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
         patches.set(project.layout.projectDirectory.dir("patches/resources"))
     }
@@ -152,6 +145,9 @@ open class SoftSpoonTasks(
     fun afterEvaluate() {
         val download = project.download.get()
 
+        // todo all this should be a dependency resolution hook like
+        // https://github.com/PaperMC/paperweight/blob/88edb5ce16a794cd72d33c0a750fd9f334e5677f/paperweight-userdev/src/main/kotlin/io/papermc/paperweight/userdev/PaperweightUser.kt#L237-L246
+        // https://discord.com/channels/289587909051416579/776169605760286730/1155170101599940698
         mache = this.project.configurations.named(MACHE_CONFIG).get().singleFile.toPath().openZip().use { zip ->
             return@use gson.fromJson<MacheMeta>(zip.getPath("/mache.json").readLines().joinToString("\n"))
         }

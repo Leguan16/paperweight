@@ -20,7 +20,6 @@ internal open class JavaPatcher : Patcher {
 
     override fun applyPatches(baseDir: Path, patchDir: Path, outputDir: Path, failedDir: Path): PatchResult {
         var result = baseDir.walk()
-            .filter { it.name.endsWith(".java") }
             .map { original ->
                 val relPath = original.relativeTo(baseDir)
                 val patchPath = relPath.resolveSibling("${relPath.name}.patch").toString()

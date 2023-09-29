@@ -18,7 +18,6 @@ internal open class NativePatcher(private val exec: ExecOperations, protected va
 
     override fun applyPatches(baseDir: Path, patchDir: Path, outputDir: Path, failedDir: Path): PatchResult {
         baseDir.walk()
-            .filter { it.name.endsWith(".java") }
             .forEach { original ->
                 val relPath = original.relativeTo(baseDir)
                 val patched = outputDir.resolve(relPath.toString())

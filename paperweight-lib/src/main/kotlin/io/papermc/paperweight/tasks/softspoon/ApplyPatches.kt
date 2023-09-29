@@ -2,19 +2,17 @@ package io.papermc.paperweight.tasks.softspoon
 
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.patches.*
-import io.papermc.paperweight.util.patches.JavaPatcher
-import io.papermc.paperweight.util.patches.NativePatcher
-import io.papermc.paperweight.util.patches.Patcher
 import javax.inject.Inject
 import kotlin.io.path.*
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.lib.PersonIdent
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import org.gradle.process.ExecOperations
@@ -24,6 +22,9 @@ abstract class ApplyPatches: DefaultTask() {
 
     @get:InputDirectory
     abstract val input: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val output: DirectoryProperty
 
     @get:InputDirectory
     abstract val patches: DirectoryProperty
@@ -37,6 +38,9 @@ abstract class ApplyPatches: DefaultTask() {
     @get:Inject
     abstract val exec: ExecOperations
 
+    @get:Inject
+    abstract val layout: ProjectLayout
+
     init {
         run {
             useNativeDiff.convention(false)
@@ -46,21 +50,9 @@ abstract class ApplyPatches: DefaultTask() {
 
     @TaskAction
     fun run() {
-        val git = Git.open(input.convertToPath().toFile());
-        val tags = git.tagList().call()
-        val initialTag = tags.firstOrNull { it.name == "refs/tags/$PATCHED_TAG" }
-        if (initialTag != null) {
-            git.tagDelete()
-                .setTags(initialTag.name)
-                .call()
+        output.convertToPath().ensureClean()
 
-            git.reset()
-                .setMode(ResetCommand.ResetType.HARD)
-                .setRef("mache")
-                .call()
-        }
-
-        val result = createPatcher().applyPatches(input.get().path, patches.get().path, input.get().path, input.get().path)
+        val result = createPatcher().applyPatches(input.get().path, patches.get().path, output.get().path, output.get().path)
 
         if (result is PatchFailure) {
             result.failures
@@ -69,9 +61,14 @@ abstract class ApplyPatches: DefaultTask() {
             throw Exception("Failed to apply ${result.failures.size} patches")
         }
 
+        // TODO ideally we manage to make a commit with just the patch changes
+        val git = Git.init()
+            .setDirectory(output.convertToPath().toFile())
+            .setInitialBranch("mache")
+            .call()
         git.add().addFilepattern(".").call()
         git.commit()
-            .setMessage("Patched")
+            .setMessage("Initial")
             .setAuthor(macheIdent)
             .setSign(false)
             .call()

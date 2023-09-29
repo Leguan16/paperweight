@@ -4,13 +4,14 @@ import com.github.difflib.DiffUtils
 import com.github.difflib.UnifiedDiffUtils
 import io.papermc.paperweight.util.*
 import java.nio.file.Path
+import javax.inject.Inject
 import kotlin.io.path.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 
@@ -21,10 +22,16 @@ abstract class RebuildPatches : DefaultTask() {
     abstract val input: DirectoryProperty
 
     @get:InputDirectory
+    abstract val base: DirectoryProperty
+
+    @get:InputDirectory
     abstract val patches: DirectoryProperty
 
     @get:Input
     abstract val contextLines: Property<Int>
+
+    @get:Inject
+    abstract val layout: ProjectLayout
 
     init {
         run {
@@ -35,17 +42,18 @@ abstract class RebuildPatches : DefaultTask() {
     @TaskAction
     fun run() {
         val patchDir = patches.convertToPath().ensureClean()
+        patchDir.createDirectory()
         val inputDir = input.convertToPath()
+        val baseDir = base.convertToPath()
 
-        // no need to check for newly created files
-        // also no need to check for deleted files
-        val patchesCreated = decompJar.convertToPath().useZip { decompRoot ->
-            sourceRoot.walk()
-                .filterNot { it.relativeTo(sourceRoot).first().name == ".git" }
-                .sumOf {
-                    diffFile(sourceRoot, decompRoot, it.relativeTo(sourceRoot).toString().replace("\\", "/"), patches)
-                }
-        }
+        val patchesCreated = baseDir.walk()
+            .filter {
+                val path = it.toString()
+                !path.startsWith(".git") && !path.endsWith(".nbt") && !path.endsWith(".mcassetsroot")
+            }
+            .sumOf {
+                diffFile(inputDir, baseDir, it.relativeTo(baseDir).toString().replace("\\", "/"), patchDir)
+            }
 
         logger.lifecycle("Rebuilt $patchesCreated patches")
     }

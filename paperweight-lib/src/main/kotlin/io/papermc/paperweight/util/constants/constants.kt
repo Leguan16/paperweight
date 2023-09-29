@@ -127,6 +127,7 @@ private const val MACHE_PATH = "$PAPER_PATH/mache"
 const val PATCHED_JAR = "$MACHE_PATH/patched.jar"
 const val FAILED_PATCH_JAR = "$MACHE_PATH/failed.jar"
 const val PATCHES_FOLDER = "$MACHE_PATH/patches"
+const val BASE_PROJECT = "$MACHE_PATH/base"
 
 fun paperSetupOutput(name: String, ext: String) = "$SETUP_CACHE/$name.$ext"
 fun Task.paperTaskOutput(ext: String) = paperTaskOutput(name, ext)
