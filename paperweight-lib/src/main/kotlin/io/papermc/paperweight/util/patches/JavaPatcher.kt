@@ -68,7 +68,7 @@ internal open class JavaPatcher : Patcher {
             patched.writeLines(
                 patchedLines,
                 Charsets.UTF_8,
-                StandardOpenOption.CREATE_NEW,
+                StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
                 StandardOpenOption.TRUNCATE_EXISTING,
             )

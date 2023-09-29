@@ -75,6 +75,8 @@ abstract class SetupSources : DefaultTask() {
         files.sync {
             from(files.zipTree(decompJar))
             into(sourceDir)
+            // ignore resources here, we gonna handle them separately
+            exclude { !it.name.endsWith(".java") }
             includeEmptyDirs = false
         }
 
@@ -94,11 +96,11 @@ abstract class SetupSources : DefaultTask() {
 
         git.add().addFilepattern(".").call()
         git.commit()
-            .setMessage("Patched")
+            .setMessage("Mache")
             .setAuthor(macheIdent)
             .setSign(false)
             .call()
-        git.tag().setName("patched").setTagger(macheIdent).setSigned(false).call()
+        git.tag().setName("mache").setTagger(macheIdent).setSigned(false).call()
 
         files.copy {
             from(files.zipTree(failedPatchJar))

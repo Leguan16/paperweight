@@ -2,6 +2,8 @@ package io.papermc.paperweight.core.taskcontainers
 
 import io.papermc.paperweight.core.ext
 import io.papermc.paperweight.tasks.mache.*
+import io.papermc.paperweight.tasks.softspoon.ApplyPatches
+import io.papermc.paperweight.tasks.softspoon.RebuildPatches
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
 import io.papermc.paperweight.util.data.*
@@ -32,7 +34,7 @@ open class SoftSpoonTasks(
     val macheMinecraft by project.configurations.registering
 
     val macheRemapJar by tasks.registering(RemapJar::class) {
-        group = "softspoon"
+        group = "mache"
         serverJar.set(layout.cache.resolve(SERVER_JAR_PATH))
         serverMappings.set(layout.cache.resolve(SERVER_MAPPINGS))
 
@@ -45,7 +47,7 @@ open class SoftSpoonTasks(
     }
 
     val macheDecompileJar by tasks.registering(DecompileJar::class) {
-        group = "softspoon"
+        group = "mache"
         inputJar.set(macheRemapJar.flatMap { it.outputJar })
         decompilerArgs.set(mache.decompilerArgs)
 
@@ -55,20 +57,8 @@ open class SoftSpoonTasks(
         outputJar.set(layout.cache.resolve(FINAL_DECOMPILE_JAR))
     }
 
-    val macheSetupSources by tasks.registering(SetupSources::class) {
-        group = "softspoon"
-        decompJar.set(macheDecompileJar.flatMap { it.outputJar })
-        // Don't use the output of applyPatches directly with a flatMap
-        // That would tell Gradle that this task dependsOn applyPatches, so it
-        // would no longer work as a finalizer task if applyPatches fails
-        patchedJar.set(layout.cache.resolve(PATCHED_JAR))
-        failedPatchJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
-
-        sourceDir.set(this.project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
-    }
-
-    val macheApplyPatches by tasks.registering(ApplyPatches::class) {
-        group = "softspoon"
+    val macheApplyPatches by tasks.registering(ApplyMachePatches::class) {
+        group = "mache"
         description = "Apply decompilation patches to the source."
 
         mache.from(project.configurations.named(MACHE_CONFIG))
@@ -87,8 +77,21 @@ open class SoftSpoonTasks(
         finalizedBy(macheSetupSources)
     }
 
+    val macheSetupSources by tasks.registering(SetupSources::class) {
+        group = "mache"
+        decompJar.set(macheDecompileJar.flatMap { it.outputJar })
+        // Don't use the output of applyPatches directly with a flatMap
+        // That would tell Gradle that this task dependsOn applyPatches, so it
+        // would no longer work as a finalizer task if applyPatches fails
+        patchedJar.set(layout.cache.resolve(PATCHED_JAR))
+        failedPatchJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
+
+        sourceDir.set(this.project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+    }
+
+    // TODO we also need to create a git repo in resources here so we can have resource patches
     val macheCopyResources by tasks.registering(Sync::class) {
-        group = "softspoon"
+        group = "mache"
         into(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
         from(project.zipTree(project.layout.cache.resolve(SERVER_JAR_PATH))) {
             exclude("**/*.class", "META-INF/**")
@@ -100,6 +103,50 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Set up the full project included patched sources and resources."
         dependsOn(macheApplyPatches, macheCopyResources)
+    }
+
+    val applySourcePatches by tasks.registering(ApplyPatches::class) {
+        group = "softspoon"
+        description = "Applies patches to the vanilla sources"
+
+        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+        patches.set(project.layout.projectDirectory.dir("patches/sources"))
+    }
+
+    val applyResourcePatches by tasks.registering(ApplyPatches::class) {
+        group = "softspoon"
+        description = "Applies patches to the vanilla resources"
+
+        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
+        patches.set(project.layout.projectDirectory.dir("patches/resources"))
+    }
+
+    val applyPatches by tasks.registering(Task::class) {
+        group = "softspoon"
+        description = "Applies all patches"
+        dependsOn(applySourcePatches, applyResourcePatches)
+    }
+
+    val rebuildSourcePatches by tasks.registering(RebuildPatches::class) {
+        group = "softspoon"
+        description = "Rebuilds patches to the vanilla sources"
+
+        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+        patches.set(project.layout.projectDirectory.dir("patches/sources"))
+    }
+
+    val rebuildResourcePatches by tasks.registering(RebuildPatches::class) {
+        group = "softspoon"
+        description = "Rebuilds patches to the vanilla resources"
+
+        input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
+        patches.set(project.layout.projectDirectory.dir("patches/resources"))
+    }
+
+    val rebuildPatches by tasks.registering(Task::class) {
+        group = "softspoon"
+        description = "Rebuilds all patches"
+        dependsOn(rebuildSourcePatches, rebuildResourcePatches)
     }
 
     fun afterEvaluate() {

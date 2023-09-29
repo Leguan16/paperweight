@@ -5,12 +5,10 @@ import io.papermc.paperweight.util.constants.*
 import io.papermc.paperweight.util.patches.*
 import io.papermc.paperweight.util.patches.NativePatcher
 import javax.inject.Inject
-import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.relativeTo
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
@@ -22,7 +20,7 @@ import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 
 @UntrackedTask(because = "Always apply patches")
-abstract class ApplyPatches : DefaultTask() {
+abstract class ApplyMachePatches : DefaultTask() {
 
     @get:Classpath
     abstract val mache: ConfigurableFileCollection

@@ -127,7 +127,7 @@ open class AllTasks(
         mcDevSources.set(extension.mcDevSourceDir)
     }
 
-    val applyPatches by tasks.registering<Task> {
+    val applyPatchesLegacy by tasks.registering<Task> {
         group = "paper"
         description = "Set up the Paper development environment"
         dependsOn(applyApiPatches, applyServerPatches)
@@ -152,7 +152,7 @@ open class AllTasks(
     }
 
     @Suppress("unused")
-    val rebuildPatches by tasks.registering<Task> {
+    val rebuildPatchesLegacy by tasks.registering<Task> {
         group = "paper"
         description = "Rebuilds patches to api and server"
         dependsOn(rebuildApiPatches, rebuildServerPatches)
