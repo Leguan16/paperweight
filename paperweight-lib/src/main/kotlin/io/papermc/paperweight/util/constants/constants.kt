@@ -113,6 +113,7 @@ private const val TASK_CACHE = "$PAPER_PATH/taskCache"
 const val FINAL_REMAPPED_JAR = "$TASK_CACHE/minecraft.jar"
 const val FINAL_FILTERED_REMAPPED_JAR = "$TASK_CACHE/filteredMinecraft.jar"
 const val FINAL_DECOMPILE_JAR = "$TASK_CACHE/decompileJar.jar"
+const val SPIGOT_MACHE_DECOMPILE_JAR = "$TASK_CACHE/macheSpigotDecompileJar.jar"
 const val DECOMP_CFG = "$TASK_CACHE/decomp_cfg.txt"
 
 const val MC_DEV_SOURCES_DIR = "$PAPER_PATH/mc-dev-sources"
@@ -128,6 +129,7 @@ const val PATCHED_JAR = "$MACHE_PATH/patched.jar"
 const val FAILED_PATCH_JAR = "$MACHE_PATH/failed.jar"
 const val PATCHES_FOLDER = "$MACHE_PATH/patches"
 const val BASE_PROJECT = "$MACHE_PATH/base"
+const val REMAPPED_CB = "$MACHE_PATH/remapped-cb"
 
 fun paperSetupOutput(name: String, ext: String) = "$SETUP_CACHE/$name.$ext"
 fun Task.paperTaskOutput(ext: String) = paperTaskOutput(name, ext)

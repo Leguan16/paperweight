@@ -1,7 +1,7 @@
 [versions]
 asm = "9.6"
 lorenz = "0.5.8"
-hypo = "1.2.4"
+hypo = "2.3.0"
 serialize = "1.5.1"
 
 [libraries]
@@ -21,6 +21,7 @@ cadix-lorenz-proguard = { module = "org.cadixdev:lorenz-io-proguard", version.re
 cadix-atlas = "org.cadixdev:atlas:0.2.1"
 cadix-at = "org.cadixdev:at:0.1.0-rc1"
 cadix-mercury = "org.cadixdev:mercury:0.1.1-paperweight-SNAPSHOT"
+cadix-bombe-jar = "org.cadixdev:bombe-jar:0.4.4"
 
 hypo-model = { module = "dev.denwav.hypo:hypo-model", version.ref = "hypo" }
 hypo-core = { module = "dev.denwav.hypo:hypo-core", version.ref = "hypo" }
@@ -50,6 +51,6 @@ gradle-plugin-publish = "com.gradle.publish:plugin-publish-plugin:1.2.1"
 
 [bundles]
 asm = ["asm-core", "asm-tree"]
-cadix = ["cadix-lorenz-core", "cadix-lorenz-asm", "cadix-lorenz-proguard", "cadix-atlas", "cadix-at", "cadix-mercury"]
+cadix = ["cadix-lorenz-core", "cadix-lorenz-asm", "cadix-lorenz-proguard", "cadix-atlas", "cadix-at", "cadix-mercury", "cadix-bombe-jar"]
 hypo = ["hypo-model", "hypo-core", "hypo-hydrate", "hypo-asm-core", "hypo-asm-hydrate", "hypo-mappings"]
 kotson = ["kotson", "gson"]

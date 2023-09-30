@@ -1,8 +1,12 @@
 package io.papermc.paperweight.core.taskcontainers
 
 import io.papermc.paperweight.core.ext
+import io.papermc.paperweight.tasks.*
 import io.papermc.paperweight.tasks.mache.*
+import io.papermc.paperweight.tasks.mache.RemapJar
+import io.papermc.paperweight.tasks.patchremapv2.RemapCBPatches
 import io.papermc.paperweight.tasks.softspoon.ApplyPatches
+import io.papermc.paperweight.tasks.softspoon.ApplyPatchesFuzzy
 import io.papermc.paperweight.tasks.softspoon.RebuildPatches
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
@@ -22,6 +26,7 @@ import org.gradle.api.tasks.Sync
 
 open class SoftSpoonTasks(
     val project: Project,
+    val allTasks: AllTasks,
     tasks: TaskContainer = project.tasks
 ) {
 
@@ -102,6 +107,15 @@ open class SoftSpoonTasks(
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
 
+    val applySourcePatchesFuzzy by tasks.registering(ApplyPatchesFuzzy::class) {
+        group = "softspoon"
+        description = "Applies patches to the vanilla sources"
+
+        input.set(macheSetupSources.flatMap { it.sourceDir })
+        output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
+        patches.set(project.layout.projectDirectory.dir("patches/sources"))
+    }
+
     val applyResourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla resources"
@@ -140,6 +154,24 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Rebuilds all patches"
         dependsOn(rebuildSourcePatches, rebuildResourcePatches)
+    }
+
+    // patch remap stuff
+    val macheSpigotDecompileJar by tasks.registering<SpigotDecompileJar> {
+        group = "mache"
+        inputJar.set(macheRemapJar.flatMap { it.outputJar })
+        fernFlowerJar.set(project.ext.craftBukkit.fernFlowerJar)
+        decompileCommand.set(allTasks.buildDataInfo.map { it.decompileCommand })
+    }
+
+    val remapCBPatches by tasks.registering(RemapCBPatches::class) {
+        group = "paperweight"
+        base.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
+        //craftBukkit.set(allTasks.patchCraftBukkit.flatMap { it.outputDir })
+        craftBukkit.set(project.layout.cache.resolve("paperweight/taskCache/patchCraftBukkit.repo"))
+        outputPatchDir.set(project.layout.projectDirectory.dir("patches/remapped-cb"))
+        //mappingsFile.set(allTasks.patchMappings.flatMap { it.outputMappings })
+        mappingsFile.set(layout.cache.resolve(PATCHED_SPIGOT_MOJANG_YARN_MAPPINGS))
     }
 
     fun afterEvaluate() {
@@ -210,7 +242,7 @@ open class SoftSpoonTasks(
                     name = repository.name
                     mavenContent {
                         for (group in repository.groups ?: listOf()) {
-                            includeGroupAndSubgroups(group)
+                            includeGroupByRegex(group + ".*")
                         }
                     }
                 }

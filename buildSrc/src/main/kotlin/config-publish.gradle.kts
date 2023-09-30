@@ -33,7 +33,7 @@ fun ShadowJar.configureStandard() {
     mergeServiceFiles()
 }
 
-//val sourcesJar by tasks.existing(AbstractArchiveTask::class) {
+//val sourcesJar by tasks.existing(AbstractArchiveTask::class) { // TODO
 //    from(
 //        zipTree(project(":paperweight-lib").tasks
 //            .named("sourcesJar", AbstractArchiveTask::class)
