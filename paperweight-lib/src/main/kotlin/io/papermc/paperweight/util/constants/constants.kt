@@ -92,10 +92,12 @@ const val PATCHED_SPIGOT_MOJANG_YARN_MAPPINGS = "$MAPPINGS_DIR/spigot-mojang+yar
 const val PATCHED_SPIGOT_MOJANG_YARN_SOURCE_MAPPINGS = "$MAPPINGS_DIR/spigot-mojang+yarn-patched-source.tiny"
 const val REOBF_MOJANG_SPIGOT_MAPPINGS = "$MAPPINGS_DIR/mojang+yarn-spigot-reobf.tiny"
 const val PATCHED_REOBF_MOJANG_SPIGOT_MAPPINGS = "$MAPPINGS_DIR/mojang+yarn-spigot-reobf-patched.tiny"
+const val SPIGOT_MOJANG_PARCHMENT_MAPPINGS = "$MAPPINGS_DIR/spigot-mojang+parchment.tiny"
 
 const val OBF_NAMESPACE = "official"
 const val SPIGOT_NAMESPACE = "spigot"
 const val DEOBF_NAMESPACE = "mojang+yarn"
+const val NEW_DEOBF_NAMESPACE = "mojang+parchment"
 
 private const val DATA_PATH = "$PAPER_PATH/data"
 const val MC_MANIFEST = "$DATA_PATH/McManifest.json"

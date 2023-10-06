@@ -18,6 +18,9 @@ dependencies {
 
     implementation(libs.lorenzTiny)
 
+    implementation(libs.feather.core)
+    implementation(libs.feather.gson)
+
     implementation(libs.jbsdiff)
 
     implementation(libs.codebook)

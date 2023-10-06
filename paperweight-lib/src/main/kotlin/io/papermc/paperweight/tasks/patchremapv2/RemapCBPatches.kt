@@ -37,7 +37,7 @@ abstract class RemapCBPatches : BaseTask() {
     fun run() {
         val workDir = layout.cache.resolve(REMAPPED_CB).ensureClean()
         val patches = outputPatchDir.convertToPath().ensureClean()
-        val mappings = MappingFormats.TINY.read(mappingsFile.convertToPath(), SPIGOT_NAMESPACE, DEOBF_NAMESPACE)
+        val mappings = MappingFormats.TINY.read(mappingsFile.convertToPath(), SPIGOT_NAMESPACE, NEW_DEOBF_NAMESPACE)
 
         val configFiles = project.project(":paper-server").configurations["runtimeClasspath"].resolve().map { it.toPath() }
         val classpath = configFiles + listOf(

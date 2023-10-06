@@ -3,6 +3,7 @@ asm = "9.6"
 lorenz = "0.5.8"
 hypo = "2.3.0"
 serialize = "1.5.1"
+feather = "1.1.0"
 
 [libraries]
 asm-core = { module = "org.ow2.asm:asm", version.ref = "asm" }
@@ -20,7 +21,7 @@ cadix-lorenz-asm = { module = "org.cadixdev:lorenz-asm", version.ref = "lorenz" 
 cadix-lorenz-proguard = { module = "org.cadixdev:lorenz-io-proguard", version.ref = "lorenz" }
 cadix-atlas = "org.cadixdev:atlas:0.2.1"
 cadix-at = "org.cadixdev:at:0.1.0-rc1"
-cadix-mercury = "org.cadixdev:mercury:0.1.1-paperweight-SNAPSHOT"
+cadix-mercury = "org.cadixdev:mercury:0.1.1-paperweight-local-SNAPSHOT"
 cadix-bombe-jar = "org.cadixdev:bombe-jar:0.4.4"
 
 hypo-model = { module = "dev.denwav.hypo:hypo-model", version.ref = "hypo" }
@@ -33,6 +34,9 @@ slf4j-jdk14 = "org.slf4j:slf4j-jdk14:1.7.32"
 
 lorenzTiny = "net.fabricmc:lorenz-tiny:3.0.0"
 jbsdiff = "io.sigpipe:jbsdiff:1.0"
+
+feather-core = { module = "org.parchmentmc:feather", version.ref = "feather" }
+feather-gson = { module = "org.parchmentmc.feather:io-gson", version.ref = "feather" }
 
 diffpatch = "codechicken:DiffPatch:1.5.0.29"
 

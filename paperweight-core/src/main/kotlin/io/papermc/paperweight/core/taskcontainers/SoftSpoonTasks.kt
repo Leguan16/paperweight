@@ -4,6 +4,7 @@ import io.papermc.paperweight.core.ext
 import io.papermc.paperweight.tasks.*
 import io.papermc.paperweight.tasks.mache.*
 import io.papermc.paperweight.tasks.mache.RemapJar
+import io.papermc.paperweight.tasks.patchremapv2.GeneratePatchRemapMappings
 import io.papermc.paperweight.tasks.patchremapv2.RemapCBPatches
 import io.papermc.paperweight.tasks.softspoon.ApplyPatches
 import io.papermc.paperweight.tasks.softspoon.ApplyPatchesFuzzy
@@ -41,7 +42,7 @@ open class SoftSpoonTasks(
     val macheRemapJar by tasks.registering(RemapJar::class) {
         group = "mache"
         serverJar.set(layout.cache.resolve(SERVER_JAR_PATH))
-        serverMappings.set(layout.cache.resolve(SERVER_MAPPINGS))
+        serverMappings.set(allTasks.downloadMappings.flatMap { it.outputFile })
 
         codebookClasspath.from(macheCodebook)
         minecraftClasspath.from(macheMinecraft)
@@ -158,20 +159,32 @@ open class SoftSpoonTasks(
 
     // patch remap stuff
     val macheSpigotDecompileJar by tasks.registering<SpigotDecompileJar> {
-        group = "mache"
+        group = "patchremap"
         inputJar.set(macheRemapJar.flatMap { it.outputJar })
         fernFlowerJar.set(project.ext.craftBukkit.fernFlowerJar)
         decompileCommand.set(allTasks.buildDataInfo.map { it.decompileCommand })
     }
 
+    val generatePatchRemapMappings by tasks.registering(GeneratePatchRemapMappings::class) {
+        group = "patchremap"
+
+        minecraftClasspath.from(macheMinecraft)
+        serverJar.set(macheRemapJar.flatMap { it.outputJar })
+        paramMappings.from(macheParamMappings)
+        vanillaMappings.set(allTasks.downloadMappings.flatMap { it.outputFile })
+        spigotMappings.set(allTasks.generateSpigotMappings.flatMap { it.notchToSpigotMappings })
+
+        patchRemapMappings.set(layout.cache.resolve(SPIGOT_MOJANG_PARCHMENT_MAPPINGS))
+    }
+
     val remapCBPatches by tasks.registering(RemapCBPatches::class) {
-        group = "paperweight"
+        group = "patchremap"
         base.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
         //craftBukkit.set(allTasks.patchCraftBukkit.flatMap { it.outputDir })
         craftBukkit.set(project.layout.cache.resolve("paperweight/taskCache/patchCraftBukkit.repo"))
         outputPatchDir.set(project.layout.projectDirectory.dir("patches/remapped-cb"))
         //mappingsFile.set(allTasks.patchMappings.flatMap { it.outputMappings })
-        mappingsFile.set(layout.cache.resolve(PATCHED_SPIGOT_MOJANG_YARN_MAPPINGS))
+        mappingsFile.set(layout.cache.resolve(SPIGOT_MOJANG_PARCHMENT_MAPPINGS))
     }
 
     fun afterEvaluate() {

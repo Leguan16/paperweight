@@ -18,6 +18,7 @@ kotlin {
 }
 
 repositories {
+    mavenLocal()
     maven("https://repo.papermc.io/repository/maven-snapshots/") {
         mavenContent {
             includeModule("org.cadixdev", "mercury")
