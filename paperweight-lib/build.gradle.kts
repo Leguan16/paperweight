@@ -24,8 +24,11 @@ dependencies {
     implementation(libs.jbsdiff)
 
     implementation(libs.codebook)
+    implementation(libs.openrewrite)
 
     implementation(variantOf(libs.diffpatch) { classifier("all") }) {
+
+    implementation("net.minecraftforge:DiffPatch:2.0.7:all") {
         isTransitive = false
     }
 }
