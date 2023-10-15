@@ -46,8 +46,6 @@ abstract class RemapCBPatches : BaseTask() {
             Path.of("C:\\Users\\Martin\\.m2\\repository\\org\\jetbrains\\annotations\\24.0.1\\annotations-24.0.1.jar")
         )
 
-        println("dum $classpath")
-
         val merc = Mercury()
         merc.classPath.addAll(classpath)
         merc.processors.addAll(
@@ -73,7 +71,7 @@ abstract class RemapCBPatches : BaseTask() {
         val source = sourceRoot.resolve(relativePath)
         val decomp = decompRoot.resolve(relativePath)
 
-        if (!source.exists()  || !decomp.exists()) return 0
+        if (!source.exists() || !decomp.exists()) return 0
 
         val sourceLines = source.readLines(Charsets.UTF_8)
         val decompLines = decomp.readLines(Charsets.UTF_8)
@@ -84,9 +82,9 @@ abstract class RemapCBPatches : BaseTask() {
         }
 
         // remove all non craftbukkit chunks
-        patch.deltas.removeIf {
-            !it.target.lines.any { l -> l.contains("CraftBukkit") }
-        }
+        //patch.deltas.removeIf {
+        //    !it.target.lines.any { line -> line.contains("CraftBukkit") && !line.contains("decompile error") }
+        //}
 
         val unifiedPatch = UnifiedDiffUtils.generateUnifiedDiff(
             "a/$relativePath",

@@ -49,7 +49,7 @@ open class SoftSpoonTasks(
         remapperClasspath.from(macheRemapper)
         paramMappings.from(macheParamMappings)
 
-        outputJar.set(layout.cache.resolve(FINAL_REMAPPED_JAR))
+        outputJar.set(layout.cache.resolve(FINAL_REMAPPED_CODEBOOK_JAR))
     }
 
     val macheDecompileJar by tasks.registering(DecompileJar::class) {

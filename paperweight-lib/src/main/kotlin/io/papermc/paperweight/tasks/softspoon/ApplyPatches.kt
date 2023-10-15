@@ -54,13 +54,6 @@ abstract class ApplyPatches: DefaultTask() {
 
         val result = createPatcher().applyPatches(input.get().path, patches.get().path, output.get().path, output.get().path)
 
-        if (result is PatchFailure) {
-            result.failures
-                .map { "Patch failed: ${it.patch.relativeTo(patches.get().path)}: ${it.details}" }
-                .forEach { logger.error(it) }
-            throw Exception("Failed to apply ${result.failures.size} patches")
-        }
-
         // TODO ideally we manage to make a commit with just the patch changes
         val git = Git.init()
             .setDirectory(output.convertToPath().toFile())
@@ -73,6 +66,13 @@ abstract class ApplyPatches: DefaultTask() {
             .setSign(false)
             .call()
         git.tag().setName(PATCHED_TAG).setTagger(macheIdent).setSigned(false).call()
+
+        if (result is PatchFailure) {
+            result.failures
+                .map { "Patch failed: ${it.patch.relativeTo(patches.get().path)}: ${it.details}" }
+                .forEach { logger.error(it) }
+            throw Exception("Failed to apply ${result.failures.size} patches")
+        }
     }
 
     internal open fun createPatcher(): Patcher {
