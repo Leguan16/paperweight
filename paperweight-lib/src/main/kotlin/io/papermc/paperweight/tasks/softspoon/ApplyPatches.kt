@@ -13,6 +13,8 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
 import org.gradle.process.ExecOperations
@@ -20,12 +22,14 @@ import org.gradle.process.ExecOperations
 @UntrackedTask(because = "Always apply patches")
 abstract class ApplyPatches : DefaultTask() {
 
+    @get:PathSensitive(PathSensitivity.NONE)
     @get:InputDirectory
     abstract val input: DirectoryProperty
 
     @get:OutputDirectory
     abstract val output: DirectoryProperty
 
+    @get:PathSensitive(PathSensitivity.NONE)
     @get:InputDirectory
     abstract val patches: DirectoryProperty
 
@@ -66,7 +70,8 @@ abstract class ApplyPatches : DefaultTask() {
 
     open fun setup() {
         output.convertToPath().ensureClean()
-        Git.cloneRepository().setBranch("main").setURI("file://" + input.convertToPath().toString()).setDirectory(output.convertToPath().toFile()).call()
+        Git.cloneRepository().setBranch("main").setURI("file://" + input.convertToPath().toString()).setDirectory(output.convertToPath().toFile())
+                .call().close()
     }
 
     open fun commit() {
@@ -79,6 +84,7 @@ abstract class ApplyPatches : DefaultTask() {
             .setSign(false)
             .call()
         git.tag().setName("file").setTagger(ident).setSigned(false).call()
+        git.close()
     }
 
     internal open fun createPatcher(): Patcher {

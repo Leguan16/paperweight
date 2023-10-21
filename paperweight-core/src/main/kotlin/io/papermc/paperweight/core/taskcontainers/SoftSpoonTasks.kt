@@ -67,6 +67,9 @@ open class SoftSpoonTasks(
         group = "mache"
         description = "Setup vanilla source dir."
 
+        mache.from(project.configurations.named(MACHE_CONFIG))
+        patches.set(layout.cache.resolve(PATCHES_FOLDER))
+
         inputFile.set(macheDecompileJar.flatMap { it.outputJar })
         predicate.set { Files.isRegularFile(it) && it.toString().endsWith(".java")}
         outputDir.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
@@ -81,22 +84,11 @@ open class SoftSpoonTasks(
         outputDir.set(layout.cache.resolve(BASE_PROJECT).resolve("resources"))
     }
 
-    val applyMachePatches by tasks.registering(ApplyMachePatches::class) {
-        group = "mache"
-        description = "Applies patches to the vanilla sources"
-
-        mache.from(project.configurations.named(MACHE_CONFIG))
-
-        input.set(setupMacheSources.flatMap { it.outputDir })
-        output.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
-        patches.set(layout.cache.resolve(PATCHES_FOLDER))
-    }
-
     val applySourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla sources"
 
-        input.set(applyMachePatches.flatMap { it.output })
+        input.set(setupMacheSources.flatMap { it.outputDir })
         output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
@@ -105,7 +97,7 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Applies patches to the vanilla sources"
 
-        input.set(applyMachePatches.flatMap { it.output })
+        input.set(setupMacheSources.flatMap { it.outputDir })
         output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
