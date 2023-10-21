@@ -18,7 +18,7 @@ import org.gradle.api.tasks.UntrackedTask
 import org.gradle.process.ExecOperations
 
 @UntrackedTask(because = "Always apply patches")
-abstract class ApplyPatches: DefaultTask() {
+abstract class ApplyPatches : DefaultTask() {
 
     @get:InputDirectory
     abstract val input: DirectoryProperty
@@ -49,23 +49,12 @@ abstract class ApplyPatches: DefaultTask() {
     }
 
     @TaskAction
-    fun run() {
-        output.convertToPath().ensureClean()
+    open fun run() {
+        setup()
 
-        val result = createPatcher().applyPatches(input.get().path, patches.get().path, output.get().path, output.get().path)
+        val result = createPatcher().applyPatches(output.convertToPath(), patches.convertToPath(), output.convertToPath(), output.convertToPath())
 
-        // TODO ideally we manage to make a commit with just the patch changes
-        val git = Git.init()
-            .setDirectory(output.convertToPath().toFile())
-            .setInitialBranch("mache")
-            .call()
-        git.add().addFilepattern(".").call()
-        git.commit()
-            .setMessage("Initial")
-            .setAuthor(macheIdent)
-            .setSign(false)
-            .call()
-        git.tag().setName(PATCHED_TAG).setTagger(macheIdent).setSigned(false).call()
+        commit()
 
         if (result is PatchFailure) {
             result.failures
@@ -75,17 +64,28 @@ abstract class ApplyPatches: DefaultTask() {
         }
     }
 
+    open fun setup() {
+        output.convertToPath().ensureClean()
+        Git.cloneRepository().setBranch("main").setURI("file://" + input.convertToPath().toString()).setDirectory(output.convertToPath().toFile()).call()
+    }
+
+    open fun commit() {
+        val ident = PersonIdent("File", "filepatches@automated.papermc.io")
+        val git = Git.open(output.convertToPath().toFile())
+        git.add().addFilepattern(".").call()
+        git.commit()
+            .setMessage("File Patches")
+            .setAuthor(ident)
+            .setSign(false)
+            .call()
+        git.tag().setName("file").setTagger(ident).setSigned(false).call()
+    }
+
     internal open fun createPatcher(): Patcher {
         return if (useNativeDiff.get()) {
             NativePatcher(exec, patchExecutable.get())
         } else {
             JavaPatcher()
         }
-    }
-
-    companion object {
-        private const val PATCHED_TAG = "patched"
-
-        private val macheIdent = PersonIdent("Papier-mâché", "paper@mache.gradle")
     }
 }

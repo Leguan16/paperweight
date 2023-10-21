@@ -47,12 +47,12 @@ abstract class RebuildPatches : DefaultTask() {
         val baseDir = base.convertToPath()
 
         val patchesCreated = baseDir.walk()
+            .map { it.relativeTo(baseDir).toString().replace("\\", "/") }
             .filter {
-                val path = it.toString()
-                !path.startsWith(".git") && !path.endsWith(".nbt") && !path.endsWith(".mcassetsroot")
+                !it.startsWith(".git") && !it.endsWith(".nbt") && !it.endsWith(".mcassetsroot")
             }
             .sumOf {
-                diffFile(inputDir, baseDir, it.relativeTo(baseDir).toString().replace("\\", "/"), patchDir)
+                diffFile(inputDir, baseDir, it, patchDir)
             }
 
         logger.lifecycle("Rebuilt $patchesCreated patches")

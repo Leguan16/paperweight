@@ -13,6 +13,7 @@ import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
 import io.papermc.paperweight.util.data.*
 import io.papermc.paperweight.util.data.mache.*
+import java.nio.file.Files
 import kotlin.io.path.*
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskContainer
@@ -23,7 +24,6 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.Sync
 
 open class SoftSpoonTasks(
     val project: Project,
@@ -63,47 +63,40 @@ open class SoftSpoonTasks(
         outputJar.set(layout.cache.resolve(FINAL_DECOMPILE_JAR))
     }
 
-    val macheApplyPatches by tasks.registering(ApplyMachePatches::class) {
+    val setupMacheSources by tasks.registering(SetupVanilla::class) {
         group = "mache"
-        description = "Apply decompilation patches to the source."
+        description = "Setup vanilla source dir."
+
+        inputFile.set(macheDecompileJar.flatMap { it.outputJar })
+        predicate.set { Files.isRegularFile(it) && it.toString().endsWith(".java")}
+        outputDir.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
+    }
+
+    val setupMacheResources by tasks.registering(SetupVanilla::class) {
+        group = "mache"
+        description = "Setup vanilla resources dir"
+
+        inputFile.set(macheDecompileJar.flatMap { it.outputJar })
+        predicate.set { Files.isRegularFile(it) && !it.toString().endsWith(".java")}
+        outputDir.set(layout.cache.resolve(BASE_PROJECT).resolve("resources"))
+    }
+
+    val applyMachePatches by tasks.registering(ApplyMachePatches::class) {
+        group = "mache"
+        description = "Applies patches to the vanilla sources"
 
         mache.from(project.configurations.named(MACHE_CONFIG))
 
-        useNativeDiff.set(project.providers.gradleProperty("useNativeDiff").map { it.toBoolean() }.orElse(false))
-        project.providers.gradleProperty("patchExecutable").let { ex ->
-            if (ex.isPresent) {
-                patchExecutable.set(ex)
-            }
-        }
-
-        inputFile.set(macheDecompileJar.flatMap { it.outputJar })
-        outputJar.set(layout.cache.resolve(PATCHED_JAR))
-        failedPatchesJar.set(layout.cache.resolve(FAILED_PATCH_JAR))
-    }
-
-    val macheSetupSources by tasks.registering(SetupSources::class) {
-        group = "mache"
-        decompJar.set(macheDecompileJar.flatMap { it.outputJar })
-        patchedJar.set(macheApplyPatches.flatMap { it.outputJar })
-        failedPatchJar.set(macheApplyPatches.flatMap { it.failedPatchesJar })
-
-        sourceDir.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
-    }
-
-    val macheCopyResources by tasks.registering(Sync::class) {
-        group = "mache"
-        into(project.layout.cache.resolve(BASE_PROJECT).resolve("resources"))
-        from(project.zipTree(project.layout.cache.resolve(SERVER_JAR_PATH))) {
-            exclude("**/*.class", "META-INF/**")
-        }
-        includeEmptyDirs = false
+        input.set(setupMacheSources.flatMap { it.outputDir })
+        output.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
+        patches.set(layout.cache.resolve(PATCHES_FOLDER))
     }
 
     val applySourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla sources"
 
-        input.set(macheSetupSources.flatMap { it.sourceDir })
+        input.set(applyMachePatches.flatMap { it.output })
         output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
@@ -112,7 +105,7 @@ open class SoftSpoonTasks(
         group = "softspoon"
         description = "Applies patches to the vanilla sources"
 
-        input.set(macheSetupSources.flatMap { it.sourceDir })
+        input.set(applyMachePatches.flatMap { it.output })
         output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
         patches.set(project.layout.projectDirectory.dir("patches/sources"))
     }
@@ -120,9 +113,8 @@ open class SoftSpoonTasks(
     val applyResourcePatches by tasks.registering(ApplyPatches::class) {
         group = "softspoon"
         description = "Applies patches to the vanilla resources"
-        dependsOn(macheCopyResources)
 
-        input.set(layout.cache.resolve(BASE_PROJECT).resolve("resources"))
+        input.set(setupMacheResources.flatMap { it.outputDir })
         output.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/resources") })
         patches.set(project.layout.projectDirectory.dir("patches/resources"))
     }
