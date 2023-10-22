@@ -45,7 +45,7 @@ serialize-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", 
 
 codebook = "io.papermc.codebook:codebook:1.0.4"
 
-openrewrite = "org.openrewrite:rewrite-java-17:8.7.4"
+restamp = "io.papermc.restamp:restamp:1.0.0-SNAPSHOT"
 
 # Gradle
 gradle-licenser = "net.kyori:indra-licenser-spotless:3.1.3"

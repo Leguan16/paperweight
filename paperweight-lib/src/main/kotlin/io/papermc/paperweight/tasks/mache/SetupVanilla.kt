@@ -3,9 +3,6 @@ package io.papermc.paperweight.tasks.mache
 import io.papermc.paperweight.tasks.*
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.patches.*
-import io.papermc.paperweight.util.patches.JavaPatcher
-import io.papermc.paperweight.util.patches.NativePatcher
-import io.papermc.paperweight.util.patches.Patcher
 import java.nio.file.Path
 import java.util.function.Predicate
 import javax.inject.Inject
@@ -14,7 +11,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.PersonIdent
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ProjectLayout
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*

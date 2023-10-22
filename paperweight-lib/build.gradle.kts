@@ -24,7 +24,7 @@ dependencies {
     implementation(libs.jbsdiff)
 
     implementation(libs.codebook)
-    implementation(libs.openrewrite)
+    implementation(libs.restamp)
 
     implementation(variantOf(libs.diffpatch) { classifier("all") }) {
 

@@ -38,6 +38,7 @@ open class SoftSpoonTasks(
     val macheDecompiler by project.configurations.registering
     val macheParamMappings by project.configurations.registering
     val macheMinecraft by project.configurations.registering
+    val macheMinecraftExtended by project.configurations.registering
 
     val macheRemapJar by tasks.registering(RemapJar::class) {
         group = "mache"
@@ -120,6 +121,8 @@ open class SoftSpoonTasks(
     val rebuildSourcePatches by tasks.registering(RebuildPatches::class) {
         group = "softspoon"
         description = "Rebuilds patches to the vanilla sources"
+
+        minecraftClasspath.from(macheMinecraftExtended)
 
         base.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
         input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
@@ -255,7 +258,10 @@ open class SoftSpoonTasks(
             // setup mc deps
             libs.forEach {
                 "macheMinecraft"(it)
+                "macheMinecraftExtended"(it)
             }
+
+            "macheMinecraftExtended"(project.files(project.layout.cache.resolve(FINAL_REMAPPED_CODEBOOK_JAR)))
 
             // setup mache deps
             mache.dependencies.codebook.forEach {
