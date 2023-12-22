@@ -1,5 +1,7 @@
 package io.papermc.paperweight.tasks.softspoon
 
+import atFromString
+import atToString
 import com.github.difflib.DiffUtils
 import com.github.difflib.UnifiedDiffUtils
 import io.papermc.paperweight.util.*
@@ -13,17 +15,18 @@ import org.cadixdev.at.AccessChange
 import org.cadixdev.at.AccessTransform
 import org.cadixdev.at.AccessTransformSet
 import org.cadixdev.at.ModifierChange
-import org.cadixdev.bombe.type.MethodDescriptor
-import org.cadixdev.bombe.type.Type
+import org.cadixdev.at.io.AccessTransformFormats
 import org.cadixdev.bombe.type.signature.MethodSignature
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CompileClasspath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.UntrackedTask
@@ -40,6 +43,10 @@ abstract class RebuildPatches : DefaultTask() {
 
     @get:InputDirectory
     abstract val patches: DirectoryProperty
+
+    @get:Optional
+    @get:InputFile
+    abstract val atFile: RegularFileProperty
 
     @get:Optional
     @get:CompileClasspath
@@ -64,31 +71,33 @@ abstract class RebuildPatches : DefaultTask() {
         val inputDir = input.convertToPath()
         val baseDir = base.convertToPath()
 
+        val ats = if (atFile.isPresent) AccessTransformFormats.FML.read(atFile.convertToPath()) else AccessTransformSet.create()
+
         val patchesCreated = baseDir.walk()
             .map { it.relativeTo(baseDir).toString().replace("\\", "/") }
             .filter {
                 !it.startsWith(".git") && !it.endsWith(".nbt") && !it.endsWith(".mcassetsroot")
             }
             .sumOf {
-                diffFile(inputDir, baseDir, it, patchDir)
+                diffFile(inputDir, baseDir, it, patchDir, ats)
             }
 
         logger.lifecycle("Rebuilt $patchesCreated patches")
     }
 
-    private fun diffFile(sourceRoot: Path, decompRoot: Path, relativePath: String, patchDir: Path): Int {
+    private fun diffFile(sourceRoot: Path, decompRoot: Path, relativePath: String, patchDir: Path, oldAts: AccessTransformSet): Int {
         val source = sourceRoot.resolve(relativePath)
         val decomp = decompRoot.resolve(relativePath)
 
-        val className = relativePath.toString().replace(".java", "")
+        val className = relativePath.replace(".java", "")
 
         var sourceLines = source.readLines(Charsets.UTF_8)
         var decompLines = decomp.readLines(Charsets.UTF_8)
 
-        val newAts = AccessTransformSet.create()
+        val ats = AccessTransformSet.create()
 
-        sourceLines = handleATInSource(sourceLines, newAts, className, source)
-        decompLines = handleATInBase(decompLines, newAts, decompRoot, decomp)
+        sourceLines = handleATInSource(sourceLines, ats, className, source)
+        decompLines = handleATInBase(decompLines, ats, decompRoot, decomp)
 
 
         val patch = DiffUtils.diff(decompLines, sourceLines)
@@ -107,9 +116,10 @@ abstract class RebuildPatches : DefaultTask() {
         val atHeader = mutableListOf<String>()
 
         // TODO load existing ATs for this file into the list
+        ats.merge(oldAts)
 
-        if (newAts.classes.isNotEmpty()) {
-            val atClass = newAts.getClass(className).get()
+        if (ats.classes.isNotEmpty()) {
+            val atClass = ats.getClass(className).get()
             atClass.methods.forEach {
                 atHeader.add("AT: ${atToString(it.value)} ${it.key.name}${it.key.descriptor}")
             }
@@ -177,43 +187,8 @@ abstract class RebuildPatches : DefaultTask() {
             fixedLines.add(split[0])
         }
 
-        // TODO source.writeLines(fixedLines, Charsets.UTF_8)
+        source.writeLines(fixedLines, Charsets.UTF_8)
 
         return fixedLines
-    }
-
-    private fun atFromString(input: String): AccessTransform {
-        var last = input.length - 1
-
-        val final: ModifierChange
-        if (input[last] == 'f') {
-            final = if (input[--last] == '-') ModifierChange.REMOVE else ModifierChange.ADD
-        } else {
-            final = ModifierChange.NONE
-        }
-
-        val access = when (input.substring(0, last)) {
-            "public" -> AccessChange.PUBLIC
-            "protected" -> AccessChange.PROTECTED
-            "private" -> AccessChange.PRIVATE
-            else -> AccessChange.NONE
-        }
-
-        return AccessTransform.of(access, final)
-    }
-
-    private fun atToString(at: AccessTransform): String {
-        val access = when (at.access) {
-            AccessChange.PRIVATE -> "private"
-            AccessChange.PROTECTED -> "protected"
-            AccessChange.PUBLIC -> "public"
-            else -> ""
-        }
-        val final = when (at.final) {
-            ModifierChange.REMOVE -> "-f"
-            ModifierChange.ADD -> "+f"
-            else -> ""
-        }
-        return access + final
     }
 }

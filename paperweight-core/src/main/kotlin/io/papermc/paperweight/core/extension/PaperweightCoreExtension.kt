@@ -52,7 +52,7 @@ open class PaperweightCoreExtension(project: Project, objects: ObjectFactory, la
     val paramMappingsRepo: Property<String> = objects.property()
     val decompileRepo: Property<String> = objects.property()
     val remapRepo: Property<String> = objects.property()
-    val macheRepo: Property<String> = objects.property()
+    val macheRepo: Property<String> = objects.property<String>().convention("https://repo.papermc.io/repository/maven-public/")
 
     val vanillaJarIncludes: ListProperty<String> = objects.listProperty<String>().convention(
         listOf("/*.class", "/net/minecraft/**", "/com/mojang/math/**")

@@ -8,6 +8,7 @@ import io.papermc.paperweight.tasks.patchremapv2.GeneratePatchRemapMappings
 import io.papermc.paperweight.tasks.patchremapv2.RemapCBPatches
 import io.papermc.paperweight.tasks.softspoon.ApplyPatches
 import io.papermc.paperweight.tasks.softspoon.ApplyPatchesFuzzy
+import io.papermc.paperweight.tasks.softspoon.CollectATsFromPatches
 import io.papermc.paperweight.tasks.softspoon.RebuildPatches
 import io.papermc.paperweight.util.*
 import io.papermc.paperweight.util.constants.*
@@ -64,6 +65,19 @@ open class SoftSpoonTasks(
         outputJar.set(layout.cache.resolve(FINAL_DECOMPILE_JAR))
     }
 
+    val collectAccessTransform by tasks.registering(CollectATsFromPatches::class) {
+        group = "mache"
+
+        patchDir.set(project.layout.projectDirectory.dir("patches/sources"))
+    }
+
+    val applyAccessTransform by tasks.registering(ApplyAccessTransform::class) {
+        group = "mache"
+
+        inputJar.set(macheDecompileJar.flatMap { it.outputJar })
+        atFile.set(collectAccessTransform.flatMap { it.outputFile })
+    }
+
     val setupMacheSources by tasks.registering(SetupVanilla::class) {
         group = "mache"
         description = "Setup vanilla source dir."
@@ -71,7 +85,7 @@ open class SoftSpoonTasks(
         mache.from(project.configurations.named(MACHE_CONFIG))
         patches.set(layout.cache.resolve(PATCHES_FOLDER))
 
-        inputFile.set(macheDecompileJar.flatMap { it.outputJar })
+        inputFile.set(applyAccessTransform.flatMap { it.outputJar })
         predicate.set { Files.isRegularFile(it) && it.toString().endsWith(".java")}
         outputDir.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
     }
@@ -123,6 +137,7 @@ open class SoftSpoonTasks(
         description = "Rebuilds patches to the vanilla sources"
 
         minecraftClasspath.from(macheMinecraftExtended)
+        atFile.set(collectAccessTransform.flatMap { it.outputFile })
 
         base.set(layout.cache.resolve(BASE_PROJECT).resolve("sources"))
         input.set(project.ext.serverProject.map { it.layout.projectDirectory.dir("src/vanilla/java") })
