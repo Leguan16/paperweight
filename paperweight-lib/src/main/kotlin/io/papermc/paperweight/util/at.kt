@@ -19,6 +19,10 @@ public fun atFromString(input: String): AccessTransform {
         else -> AccessChange.NONE
     }
 
+    println("input = $input")
+    println(input.substring(0, last))
+    println("access = $access, final = $final")
+
     return AccessTransform.of(access, final)
 }
 

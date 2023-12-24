@@ -116,10 +116,11 @@ abstract class RebuildPatches : DefaultTask() {
         val atHeader = mutableListOf<String>()
 
         // TODO load existing ATs for this file into the list
+        println("oldAts = $oldAts")
+        println("ats = $ats")
         ats.merge(oldAts)
 
-        if (ats.classes.isNotEmpty()) {
-            val atClass = ats.getClass(className).get()
+        ats.getClass(className).ifPresent { atClass ->
             atClass.methods.forEach {
                 atHeader.add("AT: ${atToString(it.value)} ${it.key.name}${it.key.descriptor}")
             }

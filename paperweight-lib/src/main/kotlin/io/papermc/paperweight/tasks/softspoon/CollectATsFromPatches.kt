@@ -6,6 +6,8 @@ import io.papermc.paperweight.util.*
 import kotlin.io.path.*
 import org.cadixdev.at.AccessTransformSet
 import org.cadixdev.at.io.AccessTransformFormats
+import org.cadixdev.bombe.type.MethodDescriptor
+import org.cadixdev.bombe.type.signature.MethodSignature
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.CacheableTask
@@ -16,7 +18,8 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 @CacheableTask
-abstract class CollectATsFromPatches: BaseTask() {
+@OptIn(ExperimentalPathApi::class)
+abstract class CollectATsFromPatches : BaseTask() {
 
     @get:PathSensitive(PathSensitivity.NONE)
     @get:InputDirectory
@@ -35,29 +38,40 @@ abstract class CollectATsFromPatches: BaseTask() {
 
         val ats = AccessTransformSet.create()
 
-        println("reading ${patchDir.convertToPath()}")
+        patchDir.convertToPath()
+            .walk(PathWalkOption.INCLUDE_DIRECTORIES)
+            .filter { p -> p.toString().endsWith(".patch") }
+            .forEach { patch ->
+                patch.useLines {
+                    var atClass: AccessTransformSet.Class? = null
+                    for (line in it) {
+                        if (line.startsWith("AT: ")) {
+                            var atLine = line.replaceFirst("AT: ", "")
+                            val segments = atLine.split(" ")
+                            val parsedAt = atFromString(segments.first())
+                            if (atClass == null) {
+                                // TODO this doesn't account for inner classes :/
+                                atClass = ats.getOrCreateClass(patch.relativeTo(patchDir.convertToPath()).toString().replace(".java.patch", "").replace("/", ".").replace("\\", "."))
+                            }
 
-        // TODO recursive I guess
-        patchDir.convertToPath().listDirectoryEntries("*.patch").forEach { patch ->
-            println("check $patch")
-            patch.useLines {
-                var atClass: AccessTransformSet.Class? = null
-                for (line in it) {
-                    if (line.startsWith("AT: ")) {
-                        val at = atFromString(line.replaceFirst("AT: ", ""))
-                        if (atClass == null) {
-                            atClass = ats.getOrCreateClass(patch.nameWithoutExtension) // TODO proper class name
+                            if (segments.size < 2) {
+                                println("invalid at line: $line")
+                                continue
+                            }
+
+                            if (segments[1].contains("(")) {
+                                var methodName = segments[1].substringBefore("(")
+                                var methodDescriptor = "(" + segments[1].substringAfter("(")
+                                atClass?.replaceMethod(MethodSignature(methodName, MethodDescriptor.of(methodDescriptor)), parsedAt)
+                            } else {
+                                atClass?.replaceField(segments[1], parsedAt)
+                            }
+                        } else if (line.startsWith("====")) {
+                            break
                         }
-                        println("found at $at in $patch ($atClass)")
-                        atClass?.merge(at)
-                    } else if (line.startsWith("====")) {
-                        break
                     }
                 }
             }
-        }
-
-        println("ATS: $ats")
 
         AccessTransformFormats.FML.write(output, ats)
     }
