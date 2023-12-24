@@ -27,8 +27,6 @@ dependencies {
     implementation(libs.restamp)
 
     implementation(variantOf(libs.diffpatch) { classifier("all") }) {
-
-    implementation("net.minecraftforge:DiffPatch:2.0.7:all") {
         isTransitive = false
     }
 }
